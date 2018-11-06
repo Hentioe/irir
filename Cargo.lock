@@ -1,0 +1,12 @@
+[[package]]
+name = "irrserver"
+version = "0.0.0"
+
+[[package]]
+name = "libcore"
+version = "0.0.0"
+
+[[package]]
+name = "libresizer"
+version = "0.0.0"
+
