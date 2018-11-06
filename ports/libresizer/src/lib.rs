@@ -1,11 +1,11 @@
 extern crate image;
 extern crate libcore;
 
-use libcore::errors::*;
 use image::FilterType;
-use std::path::PathBuf;
+use libcore::errors::*;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct ImageOption {
@@ -15,7 +15,10 @@ pub struct ImageOption {
 
 impl ImageOption {
     pub fn new(input: &str, output: &str) -> ImageOption {
-        ImageOption { input_dir: input.to_string(), output_dir: output.to_string() }
+        ImageOption {
+            input_dir: input.to_string(),
+            output_dir: output.to_string(),
+        }
     }
 
     pub fn input_dir(&self) -> &str {
@@ -36,7 +39,12 @@ pub struct ImageInfo {
 
 impl ImageInfo {
     pub fn new(name: &str, format: &str, width: Option<u32>, height: Option<u32>) -> ImageInfo {
-        ImageInfo { name: name.to_string(), format: format.to_string(), width, height }
+        ImageInfo {
+            name: name.to_string(),
+            format: format.to_string(),
+            width,
+            height,
+        }
     }
 
     pub fn to_hash(&self) -> u64 {
@@ -70,7 +78,11 @@ pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
     let hash = hasher.finish();
     let mut opath = PathBuf::from(&opts.output_dir());
     opath.push(hash.to_string());
-    opath.set_extension(&fpath.extension().ok_or(err_msg("Did not get the extension of the input file"))?);
+    opath.set_extension(
+        &fpath
+            .extension()
+            .ok_or(err_msg("Did not get the extension of the input file"))?,
+    );
     resized.save(opath)?;
     Ok(hasher.finish())
 }
