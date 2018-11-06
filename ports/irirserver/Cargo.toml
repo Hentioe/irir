@@ -5,3 +5,4 @@ authors = ["Hentioe <me@bluerain.io>"]
 edition = "2018"
 
 [dependencies]
+libcore = { path="../libcore" }
