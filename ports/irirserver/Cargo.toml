@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 libcore = { path="../libcore" }
+libresizer = { path="../libresizer" }
+actix-web = "0.7.13"
+lazy_static = "1.2.0"
