@@ -1,3 +1,3 @@
-# Image Resizer Rust
+# Image Resizer In Rust
 
-IRR is a server app that resizes images in real time.
+IRIR is a images scale tool
