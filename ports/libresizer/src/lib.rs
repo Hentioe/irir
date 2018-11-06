@@ -69,6 +69,9 @@ pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
     } else {
         std::u32::MAX
     };
+    if width == std::u32::MAX && height == width {
+        return Err(err_msg("Please add at least one parameter"));
+    }
     let mut fpath = PathBuf::from(&opts.input_dir());
     fpath.push(img_info.fname());
     let img = image::open(&fpath)?;
@@ -94,6 +97,7 @@ mod tests {
     #[test]
     fn test_resize() {
         let opts = ImageOption::new("../../originals", "../../outputs");
-        resize(&opts, "jojo_01.jpg", Some(81), None).unwrap();
+        let img_info = ImageInfo::new("jojo_01", "jpg", Some(80), None);
+        resize(&opts, &img_info).unwrap();
     }
 }
