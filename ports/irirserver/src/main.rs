@@ -1,10 +1,12 @@
 #[macro_use]
 extern crate lazy_static;
+extern crate env_logger;
 extern crate actix_web;
 extern crate libcore;
 extern crate libresizer;
 
 use actix_web::{fs, server, App, HttpRequest};
+use actix_web::middleware::Logger;
 use irirserver::cli;
 use libcore::errors::*;
 use libresizer::{ImageInfo, ImageOption};
@@ -76,12 +78,17 @@ fn display_img(req: &HttpRequest) -> Result<fs::NamedFile> {
 }
 
 fn main() {
+
+    std::env::set_var("RUST_LOG", "actix_web=info");
+    env_logger::init();
     let apps = || {
         vec![App::new()
+            .middleware(Logger::default())
+            .middleware(Logger::new("%a %{User-Agent}i"))
             .prefix("/display")
             .resource("/", |r| r.f(|_req| "/{file_name} access image"))
             .resource("/{name}.{format}", |r| r.f(display_img))
             .finish()]
     };
-    server::new(apps).bind("127.0.0.1:8080").unwrap().run();
+    server::new(apps).bind("0.0.0.0:8080").unwrap().run();
 }
