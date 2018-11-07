@@ -19,7 +19,7 @@ use std::sync::Mutex;
 lazy_static! {
     static ref IOPTS: ImageOption = {
         let matches = cli::build_cli().get_matches();
-        let originals = matches.value_of("original_path").unwrap();
+        let originals = matches.value_of("origin_path").unwrap();
         let outputs = matches.value_of("output_path").unwrap();
         let filter_type =
             libresizer::gen_filter_type(matches.value_of("filter_type").unwrap()).unwrap();

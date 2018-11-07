@@ -4,15 +4,19 @@ A file server that can resize images in real time.
 
 ## Usage
 
-````bash
-# Defining parameters
-port=8080
-origin_dir=/home/static/images
-output_dir=/home/static/caches
+### Running
 
-# Running
-irirserver --dir-origin ${origin_dir} --dir-output ${output_dir} \
--p 8080
+````bash
+cargo run -- --dir-origin ./originals --dir-output ./outputs
 ````
+
+### Access
+
+1. I need to compress a image with a `height` of `100`  
+  [http://localhost:8080/display/h100/jojo_01.jpg](http://localhost:8080/display/h100/jojo_01.jpg)
+1. I need to compress a image with a `width` of `250`  
+  [http://localhost:8080/display/w250/jojo_01.jpg](http://localhost:8080/display/w250/jojo_01.jpg)
+3. I want to use the query parameters  
+  [http://localhost:8080/display/jojo_01.jpg?w=150](http://localhost:8080/display/jojo_01.jpg?w=150)
 
 Note: **Currently in the Alpha stage, but basic features are available**
