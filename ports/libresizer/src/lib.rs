@@ -1,23 +1,25 @@
 extern crate image;
 extern crate libcore;
 
-use image::FilterType;
+pub use image::FilterType;
 use libcore::errors::*;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ImageOption {
     input_dir: String,
     output_dir: String,
+    filter_type: FilterType,
 }
 
 impl ImageOption {
-    pub fn new(input: &str, output: &str) -> ImageOption {
+    pub fn new(input: &str, output: &str, filter_type: FilterType) -> ImageOption {
         ImageOption {
             input_dir: input.to_string(),
             output_dir: output.to_string(),
+            filter_type,
         }
     }
 
@@ -26,6 +28,9 @@ impl ImageOption {
     }
     pub fn output_dir(&self) -> &str {
         self.output_dir.as_str()
+    }
+    pub fn filter_type(&self) -> FilterType {
+        self.filter_type
     }
 }
 
@@ -79,7 +84,7 @@ pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
     let mut fpath = PathBuf::from(&opts.input_dir());
     fpath.push(img_info.fname());
     let img = image::open(&fpath)?;
-    let resized = img.resize(width, height, FilterType::Nearest);
+    let resized = img.resize(width, height, opts.filter_type());
     let mut hasher = DefaultHasher::new();
     hasher.write(&resized.raw_pixels());
     let hash = hasher.finish();
@@ -94,13 +99,24 @@ pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
     Ok(hasher.finish())
 }
 
+pub fn gen_filter_type(filter_type_s: &str) -> Result<FilterType> {
+    match filter_type_s.to_lowercase().as_str() {
+        "nearest" => Ok(FilterType::Nearest),
+        "gaussian" => Ok(FilterType::Gaussian),
+        "catmullrom" => Ok(FilterType::CatmullRom),
+        "lanczos3" => Ok(FilterType::Lanczos3),
+        "triangle" => Ok(FilterType::Triangle),
+        _ => Err(err_msg("Unknown FilterType")),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_resize() {
-        let opts = ImageOption::new("../../originals", "../../outputs");
+        let opts = ImageOption::new("../../originals", "../../outputs", FilterType::Lanczos3);
         let img_info = ImageInfo::new("ember", "png", None, Some(55));
         resize(&opts, &img_info).unwrap();
     }

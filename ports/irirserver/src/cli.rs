@@ -17,6 +17,15 @@ pub fn build_cli() -> App<'static, 'static> {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("filter_type")
+                .long("filter-type")
+                .short("p")
+                .help("Listening port")
+                .required(false)
+                .default_value("lanczos3")
+                .takes_value(true),
+        )
+        .arg(
             Arg::with_name("original_path")
                 .long("dir-original")
                 .help("Original image directory path")

@@ -21,7 +21,9 @@ lazy_static! {
         let matches = cli::build_cli().get_matches();
         let originals = matches.value_of("original_path").unwrap();
         let outputs = matches.value_of("output_path").unwrap();
-        ImageOption::new(originals, outputs)
+        let filter_type =
+            libresizer::gen_filter_type(matches.value_of("filter_type").unwrap()).unwrap();
+        ImageOption::new(originals, outputs, filter_type)
     };
     static ref Cache: Mutex<HashMap<u64, u64>> = Mutex::new(HashMap::new());
 }
@@ -117,6 +119,7 @@ fn check_size(width: &Option<u32>, height: &Option<u32>) -> Result<()> {
 fn main() {
     let matches = cli::build_cli().get_matches();
     let port = matches.value_of("port").unwrap();
+    libresizer::gen_filter_type(matches.value_of("filter_type").unwrap()).unwrap();
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
     let apps = || {
