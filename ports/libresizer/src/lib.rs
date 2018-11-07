@@ -79,7 +79,7 @@ pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
     let mut fpath = PathBuf::from(&opts.input_dir());
     fpath.push(img_info.fname());
     let img = image::open(&fpath)?;
-    let resized = img.resize(width, height, FilterType::Lanczos3);
+    let resized = img.resize(width, height, FilterType::Nearest);
     let mut hasher = DefaultHasher::new();
     hasher.write(&resized.raw_pixels());
     let hash = hasher.finish();
@@ -101,7 +101,7 @@ mod tests {
     #[test]
     fn test_resize() {
         let opts = ImageOption::new("../../originals", "../../outputs");
-        let img_info = ImageInfo::new("jojo_01", "jpg", Some(80), None);
+        let img_info = ImageInfo::new("ember", "png", None, Some(55));
         resize(&opts, &img_info).unwrap();
     }
 }
