@@ -127,8 +127,8 @@ fn main() {
             .middleware(Logger::default())
             .middleware(Logger::new("%a %{User-Agent}i"))
             .prefix("/display")
-            .resource("/", |r| {
-                r.f(|_req| "/Use '{file_name}?w={num}&h={num}' to access images")
+            .resource("", |r| {
+                r.f(|_req| "Access images via /w{num}/{file_name} or /h{num}/{file_name}")
             })
             .resource("/{name}.{format}", |r| r.f(display_by_query))
             .resource("/{size_s}/{name}.{format}", |r| r.f(display_by_path))
