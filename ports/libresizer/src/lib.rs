@@ -56,6 +56,10 @@ impl ImageInfo {
     pub fn fname(&self) -> String {
         format!("{}.{}", self.name, self.format)
     }
+
+    pub fn format(&self) -> &str {
+        self.format.as_str()
+    }
 }
 
 pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
