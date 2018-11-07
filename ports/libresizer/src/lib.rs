@@ -5,7 +5,7 @@ pub use image::FilterType;
 use libcore::errors::*;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
 pub struct ImageOption {
@@ -95,8 +95,11 @@ pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
             .extension()
             .ok_or(err_msg("Did not get the extension of the input file"))?,
     );
-    resized.save(opath)?;
-    Ok(hasher.finish())
+    // Check if the file exists
+    if !Path::new(&opath).exists() {
+        resized.save(opath)?;
+    }
+    Ok(hash)
 }
 
 pub fn gen_filter_type(filter_type_s: &str) -> Result<FilterType> {

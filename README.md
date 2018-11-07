@@ -7,7 +7,7 @@ A file server that can resize images in real time.
 ### Running
 
 ````bash
-cargo run -- --dir-origin ./originals --dir-output ./outputs
+cargo run -- -o ./originals -O ./outputs
 ````
 
 ### Access
