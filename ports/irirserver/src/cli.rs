@@ -5,7 +5,7 @@ use clap::{App, Arg};
 pub fn build_cli() -> App<'static, 'static> {
     App::new("irir-server")
         .version("0.0.0")
-        .about("Image Resizer In Rust")
+        .about("Advanced image hosting server")
         .author("Hentioe Cl (绅士喵)")
         .arg(
             Arg::with_name("port")
@@ -18,8 +18,9 @@ pub fn build_cli() -> App<'static, 'static> {
         )
         .arg(
             Arg::with_name("filter_type")
-                .long("filter-type")
-                .help("Sampling filter")
+                .long("interpolation")
+                .short("i")
+                .help("Interpolation algorithm")
                 .required(false)
                 .default_value("lanczos3")
                 .takes_value(true),
@@ -27,14 +28,16 @@ pub fn build_cli() -> App<'static, 'static> {
         .arg(
             Arg::with_name("origin_path")
                 .long("dir-origin")
-                .help("Original image directory path")
+                .short("o")
+                .help("Original directory path")
                 .required(true)
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("output_path")
                 .long("dir-output")
-                .help("Output image directory path")
+                .short("O")
+                .help("Output directory path")
                 .required(true)
                 .takes_value(true),
         )

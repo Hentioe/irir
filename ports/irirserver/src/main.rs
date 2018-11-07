@@ -83,7 +83,7 @@ fn display_by_query(req: &HttpRequest) -> Result<fs::NamedFile> {
 fn display(img_info: &ImageInfo) -> Result<fs::NamedFile> {
     let info_hash = img_info.to_hash();
     let mut cache = Cache.lock().unwrap();
-    // In cache
+    // In the cache
     if cache.contains_key(&info_hash) {
         let hash = cache
             .get(&info_hash)
@@ -95,7 +95,7 @@ fn display(img_info: &ImageInfo) -> Result<fs::NamedFile> {
             opath.to_str().ok_or(err_msg("No output file found"))?,
         )?)
     } else {
-        // Resize & Add cache
+        // Resize & Add to cache
         let hash = libresizer::resize(&IOPTS, &img_info)?;
         let mut opath = PathBuf::from(&IOPTS.output_dir());
         opath.push(hash.to_string());
@@ -128,7 +128,9 @@ fn main() {
             .middleware(Logger::new("%a %{User-Agent}i"))
             .prefix("/display")
             .resource("", |r| {
-                r.f(|_req| "Access images via /display/w{num}/{file_name} or /display/h{num}/{file_name}")
+                r.f(|_req| {
+                    "Access images via /display/w{num}/{file_name} or /display/h{num}/{file_name}"
+                })
             })
             .resource("/{name}.{format}", |r| r.f(display_by_query))
             .resource("/{size_s}/{name}.{format}", |r| r.f(display_by_path))
