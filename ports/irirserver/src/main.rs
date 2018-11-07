@@ -5,6 +5,7 @@ extern crate libcore;
 extern crate libresizer;
 
 use actix_web::{fs, server, App, HttpRequest};
+use irirserver::cli;
 use libcore::errors::*;
 use libresizer::{ImageInfo, ImageOption};
 use std::collections::HashMap;
@@ -12,7 +13,12 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 lazy_static! {
-    static ref IOPTS: ImageOption = ImageOption::new("./originals", "./outputs");
+    static ref IOPTS: ImageOption = {
+        let matches = cli::gen_clap_app().get_matches();
+        let originals = matches.value_of("dir-original").unwrap();
+        let outputs = matches.value_of("dir-output").unwrap();
+        ImageOption::new(originals, outputs)
+    };
     static ref Cache: Mutex<HashMap<u64, u64>> = Mutex::new(HashMap::new());
 }
 
