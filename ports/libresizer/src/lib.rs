@@ -6,6 +6,7 @@ use libcore::errors::*;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
+use std::u32::MAX;
 
 #[derive(Clone)]
 pub struct ImageOption {
@@ -68,23 +69,24 @@ impl ImageInfo {
 }
 
 pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
-    let width = if let Some(w) = img_info.width {
-        w
-    } else {
-        std::u32::MAX
-    };
-    let height = if let Some(h) = img_info.height {
-        h
-    } else {
-        std::u32::MAX
-    };
-    if width == std::u32::MAX && height == width {
-        return Err(err_msg("Please add at least one parameter"));
-    }
+    let width = img_info.width.unwrap_or(MAX);
+    let height = img_info.height.unwrap_or(MAX);
     let mut fpath = PathBuf::from(&opts.input_dir());
     fpath.push(img_info.fname());
     let img = image::open(&fpath)?;
-    let resized = img.resize(width, height, opts.filter_type());
+
+    let resized = {
+        if width == MAX && height == MAX {
+            // Original size
+            img
+        } else if width == MAX || height == MAX {
+            // Preserve aspect ratio
+            img.resize(width, height, opts.filter_type())
+        } else {
+            // Does not preserve aspect ratio
+            img.resize_exact(width, height, opts.filter_type())
+        }
+    };
     let mut hasher = DefaultHasher::new();
     hasher.write(&resized.raw_pixels());
     let hash = hasher.finish();
