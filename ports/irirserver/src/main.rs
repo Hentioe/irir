@@ -18,9 +18,9 @@ use std::sync::Mutex;
 
 lazy_static! {
     static ref IOPTS: ImageOption = {
-        let matches = cli::gen_clap_app().get_matches();
-        let originals = matches.value_of("dir-original").unwrap();
-        let outputs = matches.value_of("dir-output").unwrap();
+        let matches = cli::build_cli().get_matches();
+        let originals = matches.value_of("original_path").unwrap();
+        let outputs = matches.value_of("output_path").unwrap();
         ImageOption::new(originals, outputs)
     };
     static ref Cache: Mutex<HashMap<u64, u64>> = Mutex::new(HashMap::new());
@@ -49,7 +49,7 @@ fn display_by_path(req: &HttpRequest) -> Result<fs::NamedFile> {
     } else {
         None
     };
-
+    check_size(&width, &height)?;
     let img_info = ImageInfo::new(name, format, width, height);
     display(&img_info)
 }
@@ -64,23 +64,16 @@ fn display_by_query(req: &HttpRequest) -> Result<fs::NamedFile> {
         .ok_or(err_msg("Missing format parameter"))?;
     let query = req.query();
     let width = if let Some(w) = query.get("w") {
-        let w: u32 = w.parse()?;
-        if w > 1280 {
-            return Err(err_msg("Width out of range"));
-        }
-        Some(w)
+        Some(w.parse()?)
     } else {
         None
     };
     let height = if let Some(h) = query.get("h") {
-        let h: u32 = h.parse()?;
-        if h > 1280 {
-            return Err(err_msg("Height out of range"));
-        }
-        Some(h)
+        Some(h.parse()?)
     } else {
         None
     };
+    check_size(&width, &height)?;
     let img_info = ImageInfo::new(name, format, width, height);
     display(&img_info)
 }
@@ -111,7 +104,19 @@ fn display(img_info: &ImageInfo) -> Result<fs::NamedFile> {
     }
 }
 
+fn check_size(width: &Option<u32>, height: &Option<u32>) -> Result<()> {
+    let width = width.unwrap_or(0);
+    let height = height.unwrap_or(0);
+    if width > 1280 || height > 1280 {
+        Err(err_msg("Illegal size parameter"))
+    } else {
+        Ok(())
+    }
+}
+
 fn main() {
+    let matches = cli::build_cli().get_matches();
+    let port = matches.value_of("port").unwrap();
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
     let apps = || {
@@ -126,5 +131,8 @@ fn main() {
             .resource("/{size_s}/{name}.{format}", |r| r.f(display_by_path))
             .finish()]
     };
-    server::new(apps).bind("0.0.0.0:8080").unwrap().run();
+    server::new(apps)
+        .bind(format!("0.0.0.0:{}", port))
+        .unwrap()
+        .run();
 }

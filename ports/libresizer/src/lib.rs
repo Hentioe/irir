@@ -79,7 +79,7 @@ pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
     let mut fpath = PathBuf::from(&opts.input_dir());
     fpath.push(img_info.fname());
     let img = image::open(&fpath)?;
-    let resized = img.resize(width, height, FilterType::Lanczos3);
+    let resized = img.resize(width, height, FilterType::Gaussian);
     let mut hasher = DefaultHasher::new();
     hasher.write(&resized.raw_pixels());
     let hash = hasher.finish();
