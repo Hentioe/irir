@@ -9,14 +9,11 @@ struct BlurHandler {
 
 impl ImageHandler for BlurHandler {
     fn handle(&self, img: DynamicImage) -> Result<DynamicImage> {
-        Ok(img.blur(self.sigma))
-    }
-}
-
-impl BlurHandler {
-    pub fn sigma(&mut self, sigma: f32) -> &BlurHandler {
-        self.sigma = sigma;
-        self
+        if self.sigma != 0.0 {
+            Ok(img.blur(self.sigma))
+        } else {
+            Ok(img)
+        }
     }
 }
 
