@@ -1,6 +1,7 @@
 extern crate image;
 extern crate libcore;
 
+use image::DynamicImage;
 pub use image::FilterType;
 use libcore::errors::*;
 use std::collections::hash_map::DefaultHasher;
@@ -68,42 +69,6 @@ impl ImageInfo {
     }
 }
 
-pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
-    let width = img_info.width.unwrap_or(MAX);
-    let height = img_info.height.unwrap_or(MAX);
-    let mut fpath = PathBuf::from(&opts.input_dir());
-    fpath.push(img_info.fname());
-    let img = image::open(&fpath)?;
-
-    let resized = {
-        if width == MAX && height == MAX {
-            // Original size
-            img
-        } else if width == MAX || height == MAX {
-            // Preserve aspect ratio
-            img.resize(width, height, opts.filter_type())
-        } else {
-            // Does not preserve aspect ratio
-            img.resize_exact(width, height, opts.filter_type())
-        }
-    };
-    let mut hasher = DefaultHasher::new();
-    hasher.write(&resized.raw_pixels());
-    let hash = hasher.finish();
-    let mut opath = PathBuf::from(&opts.output_dir());
-    opath.push(hash.to_string());
-    opath.set_extension(
-        &fpath
-            .extension()
-            .ok_or(err_msg("Did not get the extension of the input file"))?,
-    );
-    // Check if the file exists
-    if !Path::new(&opath).exists() {
-        resized.save(opath)?;
-    }
-    Ok(hash)
-}
-
 pub fn gen_filter_type(filter_type_s: &str) -> Result<FilterType> {
     match filter_type_s.to_lowercase().as_str() {
         "nearest" => Ok(FilterType::Nearest),
@@ -115,6 +80,90 @@ pub fn gen_filter_type(filter_type_s: &str) -> Result<FilterType> {
     }
 }
 
+fn pipeline(opts: &ImageOption, img_info: &ImageInfo, handlers: Vec<&ImageHandler>) -> Result<u64> {
+    // Load original image
+    let mut fpath = PathBuf::from(&opts.input_dir());
+    fpath.push(img_info.fname());
+    let img = image::open(&fpath)?;
+    // Recursive call handler
+    let result_img = pipeline_each(img, 0, handlers)?;
+    // Get hash
+    let mut hasher = DefaultHasher::new();
+    hasher.write(&result_img.raw_pixels());
+    let hash = hasher.finish();
+    let mut opath = PathBuf::from(&opts.output_dir());
+    opath.push(hash.to_string());
+    opath.set_extension(
+        &fpath
+            .extension()
+            .ok_or(err_msg("Did not get the extension of the input file"))?,
+    );
+    // Check if the file exists
+    if !Path::new(&opath).exists() {
+        result_img.save(opath)?;
+    }
+    Ok(hash)
+}
+
+fn pipeline_each(
+    result: DynamicImage,
+    begin: usize,
+    handlers: Vec<&ImageHandler>,
+) -> Result<DynamicImage> {
+    if begin >= handlers.len() {
+        Ok(result)
+    } else {
+        let handler = handlers
+            .get(begin)
+            .ok_or(err_msg(format!("No image handler found, index: {}", begin)))?;
+        let next = begin + 1;
+        pipeline_each(handler.handle(result)?, next, handlers)
+    }
+}
+
+trait ImageHandler {
+    fn handle(&self, img: DynamicImage) -> Result<DynamicImage>;
+}
+
+struct Resizer {
+    width: Option<u32>,
+    height: Option<u32>,
+    filter_type: FilterType,
+}
+
+impl ImageHandler for Resizer {
+    fn handle(&self, img: DynamicImage) -> Result<DynamicImage> {
+        let width = self.width.unwrap_or(MAX);
+        let height = self.height.unwrap_or(MAX);
+
+        let resized = {
+            if width == MAX && height == MAX {
+                // Original size
+                img
+            } else if width == MAX || height == MAX {
+                // Preserve aspect ratio
+                img.resize(width, height, self.filter_type)
+            } else {
+                // Does not preserve aspect ratio
+                img.resize_exact(width, height, self.filter_type)
+            }
+        };
+        Ok(resized)
+    }
+}
+
+pub fn resize(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
+    pipeline(
+        opts,
+        img_info,
+        vec![&Resizer {
+            width: img_info.width,
+            height: img_info.height,
+            filter_type: opts.filter_type(),
+        }],
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -122,7 +171,7 @@ mod tests {
     #[test]
     fn test_resize() {
         let opts = ImageOption::new("../../originals", "../../outputs", FilterType::Lanczos3);
-        let img_info = ImageInfo::new("ferris", "png", None, Some(55));
-        resize(&opts, &img_info).unwrap();
+        let img_info = ImageInfo::new("ferris", "png", None, Some(350));
+        println!("hash: {}", resize(&opts, &img_info).unwrap());
     }
 }
