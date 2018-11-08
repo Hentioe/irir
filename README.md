@@ -22,4 +22,4 @@ cargo run -- -o ./originals -O ./outputs
 ## Notes
 
 * Missing one size parameter will preserve the aspect ratio
-* No size parameter will retain the original size (But usually compresses the file size)
+* No size parameter will preserve the original size (But usually compresses the file size)
