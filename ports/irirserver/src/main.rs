@@ -27,56 +27,22 @@ lazy_static! {
     };
     static ref Cache: Mutex<HashMap<u64, u64>> = Mutex::new(HashMap::new());
 }
-fn display_by_path(req: &HttpRequest) -> Result<fs::NamedFile> {
-    let params = req.match_info();
-    let name = params
-        .get("name")
-        .ok_or(err_msg("Missing name parameter"))?;
-    let format = params
-        .get("format")
-        .ok_or(err_msg("Missing format parameter"))?;
-    let size_s = params
-        .get("size_s")
-        .ok_or(err_msg("Missing size parameter"))?;
 
-    let re_w = Regex::new(r"w(?P<width>\d+)")?;
-    let re_h = Regex::new(r"h(?P<height>\d+)")?;
-    let width = if let Some(caps) = re_w.captures(size_s) {
-        Some(caps["width"].parse()?)
-    } else {
-        None
-    };
-    let height = if let Some(caps) = re_h.captures(size_s) {
-        Some(caps["height"].parse()?)
-    } else {
-        None
-    };
+fn display_resize(req: &HttpRequest) -> Result<fs::NamedFile> {
+    let (name, format) = get_file_params(req)?;
+    let (width, height) = get_size_params(req)?;
     check_size(&width, &height)?;
-    let img_info = ImageInfo::new(name, format, width, height);
+    let img_info = ImageInfo::new(name.as_str(), format.as_str(), width, height);
     display(&img_info)
 }
 
-fn display_by_query(req: &HttpRequest) -> Result<fs::NamedFile> {
+fn display_blur(req: &HttpRequest) -> Result<fs::NamedFile> {
     let params = req.match_info();
-    let name = params
-        .get("name")
-        .ok_or(err_msg("Missing name parameter"))?;
-    let format = params
-        .get("format")
-        .ok_or(err_msg("Missing format parameter"))?;
-    let query = req.query();
-    let width = if let Some(w) = query.get("w") {
-        Some(w.parse()?)
-    } else {
-        None
-    };
-    let height = if let Some(h) = query.get("h") {
-        Some(h.parse()?)
-    } else {
-        None
-    };
-    check_size(&width, &height)?;
-    let img_info = ImageInfo::new(name, format, width, height);
+    let level: u32 = params.get("level").unwrap_or("10").parse()?;
+    let (name, format) = get_file_params(req)?;
+    let (width, height) = get_size_params(req)?;
+    let mut img_info = ImageInfo::new(name.as_str(), format.as_str(), width, height);
+    img_info.blur(level);
     display(&img_info)
 }
 
@@ -95,14 +61,63 @@ fn display(img_info: &ImageInfo) -> Result<fs::NamedFile> {
             opath.to_str().ok_or(err_msg("No output file found"))?,
         )?)
     } else {
-        // Resize & Add to cache
-        let hash = libresizer::resize(&IOPTS, &img_info)?;
+        // Handle & Add to cache
+        let hash = {
+            if img_info.blur_level() != None {
+                libresizer::more::blur(&IOPTS, &img_info)?
+            } else {
+                libresizer::resize(&IOPTS, &img_info)?
+            }
+        };
         let mut opath = PathBuf::from(&IOPTS.output_dir());
         opath.push(hash.to_string());
         opath.set_extension(img_info.format());
         let nf = fs::NamedFile::open(opath.to_str().ok_or(err_msg("No output file found"))?)?;
         cache.insert(img_info.to_hash(), hash);
         Ok(nf)
+    }
+}
+
+fn get_file_params(req: &HttpRequest) -> Result<(String, String)> {
+    let params = req.match_info();
+    let name = params
+        .get("name")
+        .ok_or(err_msg("Missing name parameter"))?;
+    let format = params
+        .get("format")
+        .ok_or(err_msg("Missing format parameter"))?;
+    Ok((name.to_string(), format.to_string()))
+}
+
+fn get_size_params(req: &HttpRequest) -> Result<(Option<u32>, Option<u32>)> {
+    let params = req.match_info();
+    if let Some(size_s) = params.get("size_s") {
+        let re_w = Regex::new(r"w(?P<width>\d+)")?;
+        let re_h = Regex::new(r"h(?P<height>\d+)")?;
+        let width = if let Some(caps) = re_w.captures(size_s) {
+            Some(caps["width"].parse()?)
+        } else {
+            None
+        };
+        let height = if let Some(caps) = re_h.captures(size_s) {
+            Some(caps["height"].parse()?)
+        } else {
+            None
+        };
+        Ok((width, height))
+    } else {
+        let query = req.query();
+        let width = if let Some(w) = query.get("w") {
+            Some(w.parse()?)
+        } else {
+            None
+        };
+        let height = if let Some(h) = query.get("h") {
+            Some(h.parse()?)
+        } else {
+            None
+        };
+        Ok((width, height))
     }
 }
 
@@ -132,8 +147,12 @@ fn main() {
                     "Access images via /display/w{num}/{file_name} or /display/h{num}/{file_name}"
                 })
             })
-            .resource("/{name}.{format}", |r| r.f(display_by_query))
-            .resource("/{size_s}/{name}.{format}", |r| r.f(display_by_path))
+            .resource("/bl/{name}.{format}", |r| r.f(display_blur))
+            .resource("/bl/{size_s}/{name}.{format}", |r| r.f(display_blur))
+            .resource("/bl{level}/{name}.{format}", |r| r.f(display_blur))
+            .resource("/bl{level}/{size_s}/{name}.{format}", |r| r.f(display_blur))
+            .resource("/{name}.{format}", |r| r.f(display_resize))
+            .resource("/{size_s}/{name}.{format}", |r| r.f(display_resize))
             .finish()]
     };
     server::new(apps)

@@ -9,6 +9,8 @@ use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::u32::MAX;
 
+pub mod more;
+
 #[derive(Clone)]
 pub struct ImageOption {
     input_dir: String,
@@ -36,12 +38,13 @@ impl ImageOption {
     }
 }
 
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone, Hash, Default)]
 pub struct ImageInfo {
     name: String,
     format: String,
     width: Option<u32>,
     height: Option<u32>,
+    blur_level: Option<u32>,
 }
 
 impl ImageInfo {
@@ -51,6 +54,7 @@ impl ImageInfo {
             format: format.to_string(),
             width,
             height,
+            ..Default::default()
         }
     }
 
@@ -66,6 +70,15 @@ impl ImageInfo {
 
     pub fn format(&self) -> &str {
         self.format.as_str()
+    }
+
+    pub fn blur_level(&self) -> Option<u32> {
+        self.blur_level
+    }
+
+    pub fn blur(&mut self, level: u32) -> &ImageInfo {
+        self.blur_level = Some(level);
+        self
     }
 }
 

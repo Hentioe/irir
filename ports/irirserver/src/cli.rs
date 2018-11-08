@@ -41,4 +41,11 @@ pub fn build_cli() -> App<'static, 'static> {
                 .required(true)
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("enable-blur")
+                .long("enable-blur")
+                .help("Enable gaussian blur")
+                .required(false)
+                .takes_value(false),
+        )
 }
