@@ -122,7 +122,7 @@ mod tests {
     #[test]
     fn test_resize() {
         let opts = ImageOption::new("../../originals", "../../outputs", FilterType::Lanczos3);
-        let img_info = ImageInfo::new("ember", "png", None, Some(55));
+        let img_info = ImageInfo::new("ferris", "png", None, Some(55));
         resize(&opts, &img_info).unwrap();
     }
 }

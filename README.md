@@ -12,12 +12,12 @@ cargo run -- -o ./originals -O ./outputs
 
 ### Access
 
-1. I need to scale the `height` of the image to `250`  
-  [http://localhost:8080/display/h250/jojo_01.jpg](http://localhost:8080/display/h250/jojo_01.jpg)
-1. Then I set the `width` to `300`  
-  [http://localhost:8080/display/h250w300/jojo_01.jpg](http://localhost:8080/display/h250w300/jojo_01.jpg)
+1. I need to scale the `height` of the image to `600`  
+  [http://localhost:8080/display/h600/ferris.png](http://localhost:8080/display/h600/ferris.png)
+1. Then I set the `width` to `400`  
+  [http://localhost:8080/display/h600w400/ferris.png](http://localhost:8080/display/h600w400/ferris.png)
 1. I want to use the query parameters  
-  [http://localhost:8080/display/jojo_01.jpg?w=300&h=250](http://localhost:8080/display/jojo_01.jpg?w=300&h=250)
+  [http://localhost:8080/display/ferris.png?w=400&h=600](http://localhost:8080/display/ferris.png?w=400&h=600)
 
 ## Notes
 
