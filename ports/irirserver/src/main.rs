@@ -16,37 +16,34 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+struct DisplayAppState {
+    options: ImageOption,
+}
+
 lazy_static! {
-    static ref IOPTS: ImageOption = {
-        let matches = cli::build_cli().get_matches();
-        let originals = matches.value_of("origin_path").unwrap();
-        let outputs = matches.value_of("output_path").unwrap();
-        let filter_type =
-            libresizer::gen_filter_type(matches.value_of("filter_type").unwrap()).unwrap();
-        ImageOption::new(originals, outputs, filter_type)
-    };
+    static ref MATCHES: clap::ArgMatches<'static> = cli::build_cli().get_matches();
     static ref Cache: Mutex<HashMap<u64, u64>> = Mutex::new(HashMap::new());
 }
 
-fn display_resize(req: &HttpRequest) -> Result<fs::NamedFile> {
+fn display_resize(req: &HttpRequest<DisplayAppState>) -> Result<fs::NamedFile> {
     let (name, format) = get_file_params(req)?;
     let (width, height) = get_size_params(req)?;
     check_size(&width, &height)?;
     let img_info = ImageInfo::new(name.as_str(), format.as_str(), width, height);
-    display(&img_info)
+    display(&req.state().options, &img_info)
 }
 
-fn display_blur(req: &HttpRequest) -> Result<fs::NamedFile> {
+fn display_blur(req: &HttpRequest<DisplayAppState>) -> Result<fs::NamedFile> {
     let params = req.match_info();
     let level: u32 = params.get("level").unwrap_or("10").parse()?;
     let (name, format) = get_file_params(req)?;
     let (width, height) = get_size_params(req)?;
     let mut img_info = ImageInfo::new(name.as_str(), format.as_str(), width, height);
     img_info.blur(level);
-    display(&img_info)
+    display(&req.state().options, &img_info)
 }
 
-fn display(img_info: &ImageInfo) -> Result<fs::NamedFile> {
+fn display(opts: &ImageOption, img_info: &ImageInfo) -> Result<fs::NamedFile> {
     let info_hash = img_info.to_hash();
     let mut cache = Cache.lock().unwrap();
     // In the cache
@@ -54,7 +51,7 @@ fn display(img_info: &ImageInfo) -> Result<fs::NamedFile> {
         let hash = cache
             .get(&info_hash)
             .ok_or(err_msg("Cache temporary error"))?;
-        let mut opath = PathBuf::from(&IOPTS.output_dir());
+        let mut opath = PathBuf::from(&opts.output_dir());
         opath.push(hash.to_string());
         opath.set_extension(img_info.format());
         Ok(fs::NamedFile::open(
@@ -64,12 +61,12 @@ fn display(img_info: &ImageInfo) -> Result<fs::NamedFile> {
         // Handle & Add to cache
         let hash = {
             if img_info.blur_level() != None {
-                libresizer::more::blur(&IOPTS, &img_info)?
+                libresizer::more::blur(&opts, &img_info)?
             } else {
-                libresizer::resize(&IOPTS, &img_info)?
+                libresizer::resize(&opts, &img_info)?
             }
         };
-        let mut opath = PathBuf::from(&IOPTS.output_dir());
+        let mut opath = PathBuf::from(&opts.output_dir());
         opath.push(hash.to_string());
         opath.set_extension(img_info.format());
         let nf = fs::NamedFile::open(opath.to_str().ok_or(err_msg("No output file found"))?)?;
@@ -78,7 +75,7 @@ fn display(img_info: &ImageInfo) -> Result<fs::NamedFile> {
     }
 }
 
-fn get_file_params(req: &HttpRequest) -> Result<(String, String)> {
+fn get_file_params(req: &HttpRequest<DisplayAppState>) -> Result<(String, String)> {
     let params = req.match_info();
     let name = params
         .get("name")
@@ -89,7 +86,7 @@ fn get_file_params(req: &HttpRequest) -> Result<(String, String)> {
     Ok((name.to_string(), format.to_string()))
 }
 
-fn get_size_params(req: &HttpRequest) -> Result<(Option<u32>, Option<u32>)> {
+fn get_size_params(req: &HttpRequest<DisplayAppState>) -> Result<(Option<u32>, Option<u32>)> {
     let params = req.match_info();
     if let Some(size_s) = params.get("size_s") {
         let re_w = Regex::new(r"w(?P<width>\d+)")?;
@@ -132,28 +129,33 @@ fn check_size(width: &Option<u32>, height: &Option<u32>) -> Result<()> {
 }
 
 fn main() {
-    let matches = cli::build_cli().get_matches();
-    let port = matches.value_of("port").unwrap();
-    libresizer::gen_filter_type(matches.value_of("filter_type").unwrap()).unwrap();
+    let port = MATCHES.value_of("port").unwrap();
+
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
     let apps = || {
-        vec![App::new()
-            .middleware(Logger::default())
-            .middleware(Logger::new("%a %{User-Agent}i"))
-            .prefix("/display")
-            .resource("", |r| {
-                r.f(|_req| {
-                    "Access images via /display/w{num}/{file_name} or /display/h{num}/{file_name}"
-                })
+        let originals = MATCHES.value_of("origin_path").unwrap();
+        let outputs = MATCHES.value_of("output_path").unwrap();
+        let filter_type =
+            libresizer::gen_filter_type(MATCHES.value_of("filter_type").unwrap()).unwrap();
+        vec![App::with_state(DisplayAppState {
+            options: ImageOption::new(originals, outputs, &filter_type),
+        })
+        .middleware(Logger::default())
+        .middleware(Logger::new("%a %{User-Agent}i"))
+        .prefix("/display")
+        .resource("", |r| {
+            r.f(|_req| {
+                "Access images via /display/w{num}/{file_name} or /display/h{num}/{file_name}"
             })
-            .resource("/bl/{name}.{format}", |r| r.f(display_blur))
-            .resource("/bl/{size_s}/{name}.{format}", |r| r.f(display_blur))
-            .resource("/bl{level}/{name}.{format}", |r| r.f(display_blur))
-            .resource("/bl{level}/{size_s}/{name}.{format}", |r| r.f(display_blur))
-            .resource("/{name}.{format}", |r| r.f(display_resize))
-            .resource("/{size_s}/{name}.{format}", |r| r.f(display_resize))
-            .finish()]
+        })
+        .resource("/bl/{name}.{format}", |r| r.f(display_blur))
+        .resource("/bl/{size_s}/{name}.{format}", |r| r.f(display_blur))
+        .resource("/bl{level}/{name}.{format}", |r| r.f(display_blur))
+        .resource("/bl{level}/{size_s}/{name}.{format}", |r| r.f(display_blur))
+        .resource("/{name}.{format}", |r| r.f(display_resize))
+        .resource("/{size_s}/{name}.{format}", |r| r.f(display_resize))
+        .finish()]
     };
     server::new(apps)
         .bind(format!("0.0.0.0:{}", port))

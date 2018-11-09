@@ -19,11 +19,11 @@ pub struct ImageOption {
 }
 
 impl ImageOption {
-    pub fn new(input: &str, output: &str, filter_type: FilterType) -> ImageOption {
+    pub fn new(input: &str, output: &str, filter_type: &FilterType) -> ImageOption {
         ImageOption {
             input_dir: input.to_string(),
             output_dir: output.to_string(),
-            filter_type,
+            filter_type: *filter_type,
         }
     }
 
