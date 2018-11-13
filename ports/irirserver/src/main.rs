@@ -139,7 +139,7 @@ fn main() {
         let filter_type =
             libresizer::gen_filter_type(MATCHES.value_of("filter_type").unwrap()).unwrap();
         vec![App::with_state(DisplayAppState {
-            options: ImageOption::new(originals, outputs, &filter_type),
+            options: ImageOption::new(originals, outputs, filter_type),
         })
         .middleware(Logger::default())
         .middleware(Logger::new("%a %{User-Agent}i"))
