@@ -48,4 +48,12 @@ pub fn build_cli() -> App<'static, 'static> {
                 .required(false)
                 .takes_value(false),
         )
+        .arg(
+            Arg::with_name("max-width")
+                .long("max-width")
+                .help("Limit the maximum width of the image")
+                .default_value("1280")
+                .required(false)
+                .takes_value(true),
+        )
 }
