@@ -31,7 +31,7 @@ enum WebError {
 
 impl WebError {
     fn internal(e: Error) -> WebError {
-        println!("{:?}", e.to_string());
+        // Unable to convert to std::io::Error, a temporary solution
         if e.to_string() == "No such file or directory (os error 2)" {
             WebError::NotFound
         } else {
@@ -61,7 +61,7 @@ impl error::ResponseError for WebError {
 }
 
 fn render_display_404<S>(_: &HttpRequest<S>, mut resp: HttpResponse) -> AtxResult<Response> {
-    resp.set_body("Not Found");
+    resp.set_body(WebError::NotFound.to_string());
     Ok(Response::Done(resp))
 }
 
