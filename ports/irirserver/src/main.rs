@@ -2,12 +2,17 @@
 extern crate lazy_static;
 extern crate actix_web;
 extern crate env_logger;
+extern crate failure;
 extern crate libcore;
 extern crate libresizer;
 extern crate regex;
 
 use actix_web::middleware::Logger;
-use actix_web::{fs, server, App, HttpRequest};
+use actix_web::{
+    error, fs, http, middleware::ErrorHandlers, middleware::Response, server, App, HttpRequest,
+    HttpResponse, Result as AtxResult,
+};
+use failure::Fail;
 use irirserver::cli;
 use libcore::errors::*;
 use libresizer::{ImageInfo, ImageOption};
@@ -15,6 +20,52 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
+
+#[derive(Fail, Debug)]
+enum WebError {
+    #[fail(display = "Internal error, reason: {}", _0)]
+    InternalError(String),
+    #[fail(display = "Not Found")]
+    NotFound,
+}
+
+impl WebError {
+    fn internal(e: Error) -> WebError {
+        println!("{:?}", e.to_string());
+        if e.to_string() == "No such file or directory (os error 2)" {
+            WebError::NotFound
+        } else {
+            WebError::InternalError(e.to_string())
+        }
+    }
+
+    fn parse(e: std::num::ParseIntError) -> WebError {
+        WebError::InternalError(e.to_string())
+    }
+
+    fn io(e: std::io::Error) -> WebError {
+        WebError::InternalError(e.to_string())
+    }
+}
+
+impl error::ResponseError for WebError {
+    fn error_response(&self) -> HttpResponse {
+        match self {
+            WebError::InternalError(_cause) => HttpResponse::with_body(
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+                format!("{}", self),
+            ),
+            WebError::NotFound => HttpResponse::new(http::StatusCode::NOT_FOUND),
+        }
+    }
+}
+
+fn render_display_404<S>(_: &HttpRequest<S>, mut resp: HttpResponse) -> AtxResult<Response> {
+    resp.set_body("Not Found");
+    Ok(Response::Done(resp))
+}
+
+type WebResult<T> = std::result::Result<T, WebError>;
 
 struct DisplayAppState {
     options: ImageOption,
@@ -25,51 +76,66 @@ lazy_static! {
     static ref Cache: Mutex<HashMap<u64, u64>> = Mutex::new(HashMap::new());
 }
 
-fn display_resize(req: &HttpRequest<DisplayAppState>) -> Result<fs::NamedFile> {
-    let (name, format) = get_file_params(req)?;
-    let (width, height) = get_size_params(req)?;
-    check_size(&width, &height)?;
+fn display_resize(req: &HttpRequest<DisplayAppState>) -> WebResult<fs::NamedFile> {
+    let (name, format) = get_file_params(req).map_err(WebError::internal)?;
+    let (width, height) = get_size_params(req).map_err(WebError::internal)?;
+    check_size(&width, &height).map_err(WebError::internal)?;
     let img_info = ImageInfo::new(name.as_str(), format.as_str(), width, height);
     display(&req.state().options, &img_info)
 }
 
-fn display_blur(req: &HttpRequest<DisplayAppState>) -> Result<fs::NamedFile> {
+fn display_blur(req: &HttpRequest<DisplayAppState>) -> WebResult<fs::NamedFile> {
     let params = req.match_info();
-    let level: u32 = params.get("level").unwrap_or("10").parse()?;
-    let (name, format) = get_file_params(req)?;
-    let (width, height) = get_size_params(req)?;
+    let level: u32 = params
+        .get("level")
+        .unwrap_or("10")
+        .parse()
+        .map_err(WebError::parse)?;
+    let (name, format) = get_file_params(req).map_err(WebError::internal)?;
+    let (width, height) = get_size_params(req).map_err(WebError::internal)?;
     let mut img_info = ImageInfo::new(name.as_str(), format.as_str(), width, height);
     img_info.blur(level);
     display(&req.state().options, &img_info)
 }
 
-fn display(opts: &ImageOption, img_info: &ImageInfo) -> Result<fs::NamedFile> {
+fn display(opts: &ImageOption, img_info: &ImageInfo) -> WebResult<fs::NamedFile> {
     let info_hash = img_info.to_hash();
     let mut cache = Cache.lock().unwrap();
     // In the cache
     if cache.contains_key(&info_hash) {
         let hash = cache
             .get(&info_hash)
-            .ok_or(err_msg("Cache temporary error"))?;
+            .ok_or(err_msg("Cache temporary error"))
+            .map_err(WebError::internal)?;
         let mut opath = PathBuf::from(&opts.output_dir());
         opath.push(hash.to_string());
         opath.set_extension(img_info.format());
         Ok(fs::NamedFile::open(
-            opath.to_str().ok_or(err_msg("No output file found"))?,
-        )?)
+            opath
+                .to_str()
+                .ok_or(err_msg("No output file found"))
+                .map_err(WebError::internal)?,
+        )
+        .map_err(WebError::io)?)
     } else {
         // Handle & Add to cache
         let hash = {
             if img_info.blur_level() != None {
-                libresizer::more::blur(&opts, &img_info)?
+                libresizer::more::blur(&opts, &img_info).map_err(WebError::internal)?
             } else {
-                libresizer::resize(&opts, &img_info)?
+                libresizer::resize(&opts, &img_info).map_err(WebError::internal)?
             }
         };
         let mut opath = PathBuf::from(&opts.output_dir());
         opath.push(hash.to_string());
         opath.set_extension(img_info.format());
-        let nf = fs::NamedFile::open(opath.to_str().ok_or(err_msg("No output file found"))?)?;
+        let nf = fs::NamedFile::open(
+            opath
+                .to_str()
+                .ok_or(err_msg("No output file found"))
+                .map_err(WebError::internal)?,
+        )
+        .map_err(WebError::io)?;
         cache.insert(img_info.to_hash(), hash);
         Ok(nf)
     }
@@ -143,6 +209,7 @@ fn main() {
         })
         .middleware(Logger::default())
         .middleware(Logger::new("%a %{User-Agent}i"))
+        .middleware(ErrorHandlers::new().handler(http::StatusCode::NOT_FOUND, render_display_404))
         .prefix("/display")
         .resource("", |r| {
             r.f(|_req| {
