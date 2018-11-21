@@ -1,8 +1,8 @@
 extern crate image;
 extern crate libcore;
 
-use image::DynamicImage;
 pub use image::FilterType;
+use image::{DynamicImage, ImageError};
 use libcore::errors::*;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
@@ -97,7 +97,11 @@ fn pipeline(opts: &ImageOption, img_info: &ImageInfo, handlers: Vec<&ImageHandle
     // Load original image
     let mut fpath = PathBuf::from(&opts.input_dir());
     fpath.push(img_info.fname());
-    let img = image::open(&fpath)?;
+    let o_result = image::open(&fpath);
+    if let Err(ImageError::IoError(e)) = o_result {
+        return Err(Error::from(e));
+    }
+    let img = o_result?;
     // Recursive call handler
     let result_img = pipeline_each(img, 0, handlers)?;
     // Get hash

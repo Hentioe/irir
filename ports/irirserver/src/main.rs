@@ -31,12 +31,12 @@ enum WebError {
 
 impl WebError {
     fn internal(e: Error) -> WebError {
-        // Unable to convert to std::io::Error, a temporary solution
-        if e.to_string() == "No such file or directory (os error 2)" {
-            WebError::NotFound
-        } else {
-            WebError::InternalError(e.to_string())
+        if let Some(e) = e.find_root_cause().downcast_ref::<std::io::Error>() {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                return WebError::NotFound;
+            }
         }
+        WebError::InternalError(e.to_string())
     }
 
     fn parse(e: std::num::ParseIntError) -> WebError {
