@@ -88,7 +88,7 @@ fn display_blur(req: &HttpRequest<DisplayAppState>) -> WebResult<fs::NamedFile> 
     let params = req.match_info();
     let level: u32 = params
         .get("level")
-        .unwrap_or("10")
+        .unwrap_or("5")
         .parse()
         .map_err(WebError::parse)?;
     let (name, format) = get_file_params(req).map_err(WebError::internal)?;
@@ -203,22 +203,22 @@ fn get_crop_params(
         (x, y, w, h)
     } else {
         let query = req.query();
-        let x = if let Some(x_s) = query.get("x") {
+        let x = if let Some(x_s) = query.get("c_x") {
             Some(x_s.parse::<u32>()?)
         } else {
             None
         };
-        let y = if let Some(y_s) = query.get("y") {
+        let y = if let Some(y_s) = query.get("c_y") {
             Some(y_s.parse::<u32>()?)
         } else {
             None
         };
-        let w = if let Some(w_s) = query.get("w") {
+        let w = if let Some(w_s) = query.get("c_w") {
             Some(w_s.parse::<u32>()?)
         } else {
             None
         };
-        let h = if let Some(h_s) = query.get("h") {
+        let h = if let Some(h_s) = query.get("c_h") {
             Some(h_s.parse::<u32>()?)
         } else {
             None
@@ -295,35 +295,49 @@ fn main() {
         let outputs = MATCHES.value_of("output_path").unwrap();
         let filter_type =
             libresizer::gen_filter_type(MATCHES.value_of("filter_type").unwrap()).unwrap();
-        vec![App::with_state(DisplayAppState {
-            options: ImageOption::new(originals, outputs, filter_type),
-        })
-        .middleware(Logger::default())
-        .middleware(Logger::new("%a %{User-Agent}i"))
-        .middleware(ErrorHandlers::new().handler(http::StatusCode::NOT_FOUND, render_display_404))
-        .prefix("/display")
-        .resource("", |r| {
-            r.f(|_req| {
-                "Access images via /display/w{num}/{file_name} or /display/h{num}/{file_name}"
+        vec![
+            App::with_state(DisplayAppState {
+                options: ImageOption::new(originals, outputs, filter_type),
             })
-        })
-        .resource("/bl/{name}.{format}", |r| r.f(display_blur))
-        .resource("/bl/{size_s}/{name}.{format}", |r| r.f(display_blur))
-        .resource("/bl{level}/{name}.{format}", |r| r.f(display_blur))
-        .resource("/bl{level}/{size_s}/{name}.{format}", |r| r.f(display_blur))
-        .resource("/cr/{crop_s}/{name}.{format}", |r| r.f(display_crop))
-        .resource("/cr/{crop_s}/bl{level}/{name}.{format}", |r| {
-            r.f(display_crop)
-        })
-        .resource("/cr/{crop_s}/bl{level}/{size_s}/{name}.{format}", |r| {
-            r.f(display_crop)
-        })
-        .resource("/cr/{crop_s}/{size_s}/{name}.{format}", |r| {
-            r.f(display_crop)
-        })
-        .resource("/{name}.{format}", |r| r.f(display_resize))
-        .resource("/{size_s}/{name}.{format}", |r| r.f(display_resize))
-        .finish()]
+            .middleware(Logger::default())
+            .middleware(Logger::new("%a %{User-Agent}i"))
+            .middleware(
+                ErrorHandlers::new().handler(http::StatusCode::NOT_FOUND, render_display_404),
+            )
+            .prefix("/display")
+            .resource("", |r| {
+                r.f(|_req| {
+                    "Access images via /display/w{num}/{file_name} or /display/h{num}/{file_name}"
+                })
+            })
+            .resource("/bl/{name}.{format}", |r| r.f(display_blur))
+            .resource("/bl/{size_s}/{name}.{format}", |r| r.f(display_blur))
+            .resource("/bl{level}/{name}.{format}", |r| r.f(display_blur))
+            .resource("/bl{level}/{size_s}/{name}.{format}", |r| r.f(display_blur))
+            .resource("/cr/{crop_s}/{name}.{format}", |r| r.f(display_crop))
+            .resource("/cr/{crop_s}/bl{level}/{name}.{format}", |r| {
+                r.f(display_crop)
+            })
+            .resource("/cr/{crop_s}/bl{level}/{size_s}/{name}.{format}", |r| {
+                r.f(display_crop)
+            })
+            .resource("/cr/{crop_s}/{size_s}/{name}.{format}", |r| {
+                r.f(display_crop)
+            })
+            .resource("/{name}.{format}", |r| r.f(display_resize))
+            .resource("/{size_s}/{name}.{format}", |r| r.f(display_resize))
+            .finish(),
+            App::with_state(DisplayAppState {
+                options: ImageOption::new(originals, outputs, filter_type),
+            })
+            .handler(
+                "/",
+                fs::StaticFiles::new("www")
+                    .unwrap()
+                    .index_file("index.html"),
+            )
+            .finish(),
+        ]
     };
     server::new(apps)
         .bind(format!("0.0.0.0:{}", port))

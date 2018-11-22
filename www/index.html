@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html class="has-navbar-fixed-top">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+    <title>irir - An open source image hosting server</title>
+    <link rel="stylesheet" href="/static/lib/bulma-0.7.2/bulma.min.css">
+    <link rel="stylesheet" href="/static/css/index.css">
+    <script defer src="/static/js/index.js"></script>
+    <script defer src="/static/lib/fontawesome-5.5.0/all.min.js"></script>
+    <style>
+        .irir-resize .card-image,
+        .irir-blur .card-image {
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root">
+        <nav class="navbar has-shadow is-fixed-top" role="navigation" aria-label="main navigation">
+            <div class="container">
+                <div class="navbar-brand">
+                    <a class="navbar-item" href="https://bulma.io">
+                        <h4 class="title is-4">irir</h4>
+                    </a>
+
+                    <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </a>
+                </div>
+
+                <div id="navbarBasicExample" class="navbar-menu">
+                    <div class="navbar-start">
+                        <a class="navbar-item" target="_blank" href="https://github.com/Hentioe/irir/wiki">
+                            <span class="icon has-text-primary">
+                                <i class="fas fa-book"></i>
+                            </span>
+                            <span>
+                                Documentation
+                            </span>
+                        </a>
+                        <a class="navbar-item" target="_blank" href="https://github.com/Hentioe/irir/issues">
+                            <span class="icon has-text-info">
+                                <i class="fas fa-info-circle"></i>
+                            </span>
+                            <span>
+                                Help
+                            </span>
+                        </a>
+
+                        <div class="navbar-item has-dropdown is-hoverable">
+                            <a class="navbar-link">
+                                Features
+                            </a>
+
+                            <div class="navbar-dropdown">
+                                <a class="navbar-item">
+                                    Resize
+                                </a>
+                                <a class="navbar-item">
+                                    Blur
+                                </a>
+                                <a class="navbar-item">
+                                    Crop
+                                </a>
+                                <hr class="navbar-divider">
+                                <a class="navbar-item">
+                                    More
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="navbar-end">
+                        <a class="navbar-item" href="https://github.com/Hentioe/irir" target="_blank">
+                            <span class="icon" style="color: #333;">
+                                <i class="fab fa-lg fa-github-alt"></i>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <section class="hero is-medium is-info is-bold">
+            <div class="hero-body">
+                <div class="container">
+                    <h1 class="title">
+                        Welcome
+                    </h1>
+                    <h2 class="subtitle">
+                        This is an open source file hosting server that adjusts images in real time
+                    </h2>
+                </div>
+            </div>
+        </section>
+        <div class="container">
+            <section class="section irir-resize">
+                <h1 class="title">Resize</h1>
+                <h2 class="subtitle">
+                    Reduce the picture by length and width. Support for retaining aspect ratio
+                </h2>
+                <div class="columns">
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/demo.jpg" alt="Original size">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    Original (300x200)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/w150/demo.jpg" alt="Limit width: 150">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    Limit width: 150
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/h150/demo.jpg" alt="Limit height: 150">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    Limit height: 150
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/w150h150/demo.jpg" alt="150x150">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    150x150
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <hr>
+
+            <section class="section irir-blur">
+                <h1 class="title">Blur</h1>
+                <h2 class="subtitle">
+                    Gaussian blurred image, while supporting resize
+                </h2>
+                <div class="columns">
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/bl/demo.jpg" alt="Default (level 10)">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    Default (level 5)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/bl10/w150/demo.jpg" alt="Level 10 (x150_)">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    Level 10 (x150_)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/bl15/h150/demo.jpg" alt="Level 15 (_x150)">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    Level 15 (_x150)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/bl20/w150h150/demo.jpg" alt="Level 20 (150x150)">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    Level 20 (150x150)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <hr>
+
+            <section class="section irir-crop">
+                <h1 class="title">Crop</h1>
+                <h2 class="subtitle">
+                    Crop the image, based on horizontal and vertical coordinates and width/height. Support both blur
+                    and resize
+                </h2>
+                <div class="columns">
+                    <div class="column is-4">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/cr/h100/demo.jpg" alt="h: 100">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    h: 100
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-4">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/cr/h100y100/demo.jpg" alt="h: 100, y: 100">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    h: 100, y: 100
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-4">
+                        <div class="card">
+                            <div class="card-image">
+                                <img src="/display/cr/h100w100y50x50/demo.jpg" alt="h100,w100,y50,x50">
+                            </div>
+                            <div class="card-content">
+                                <div class="content">
+                                    h100,w100,y50,x50
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <hr>
+            <section class="section irir-composite">
+
+                <h1 class="title">More</h1>
+                <h2 class="subtitle">
+                    An example of a combined featrues
+                </h2>
+                <div class="irir-composite head">
+                    <img src="/display/cr/w100h50/demo.jpg" alt="Composite">
+                    <img src="/display/cr/x100w200h50/demo.jpg" alt="Composite">
+                </div>
+                <div class="irir-composite foot">
+                    <img src="/display/cr/y50w200h150/bl3/demo.jpg" alt="Composite">
+                    <img src="/display/cr/y50x200w100h150/demo.jpg" alt="Composite">
+                </div>
+            </section>
+        </div>
+        <footer class="footer">
+            <div class="content has-text-centered">
+                <p>
+                    <strong>irir</strong> by <a href="https://github.com/Hentioe">Hentioe</a>. The source code is
+                    licensed
+                    <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. The website content
+                    is licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY NC SA 4.0</a>.
+                </p>
+            </div>
+        </footer>
+    </div>
+</body>
+
+</html>
