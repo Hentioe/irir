@@ -17,7 +17,8 @@
             <div class="container">
                 <div class="navbar-brand">
                     <a class="navbar-item" href="/">
-                        <h4 class="title is-4">irir</h4>
+                        <img src="/display/favicon.png" id="logo">
+                        <strong>irir</strong>
                     </a>
 
                     <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
@@ -52,17 +53,17 @@
                             </a>
 
                             <div class="navbar-dropdown">
-                                <a class="navbar-item">
+                                <a class="navbar-item" href="#resize">
                                     Resize
                                 </a>
-                                <a class="navbar-item">
+                                <a class="navbar-item" href="#blur">
                                     Blur
                                 </a>
-                                <a class="navbar-item">
+                                <a class="navbar-item" href="#crop">
                                     Crop
                                 </a>
                                 <hr class="navbar-divider">
-                                <a class="navbar-item">
+                                <a class="navbar-item" href="#more">
                                     More
                                 </a>
                             </div>
@@ -92,7 +93,7 @@
             </div>
         </section>
         <div class="container">
-            <section class="section irir-resize">
+            <section class="section irir-resize" id="resize">
                 <h1 class="title">Resize</h1>
                 <h2 class="subtitle">
                     Reduce the picture by length and width. Support for retaining aspect ratio
@@ -150,7 +151,7 @@
             </section>
             <hr>
 
-            <section class="section irir-blur">
+            <section class="section irir-blur" id="blur">
                 <h1 class="title">Blur</h1>
                 <h2 class="subtitle">
                     Gaussian blurred image, while supporting resize
@@ -209,7 +210,7 @@
 
             <hr>
 
-            <section class="section irir-crop">
+            <section class="section irir-crop" id="crop">
                 <h1 class="title">Crop</h1>
                 <h2 class="subtitle">
                     Crop the image, based on horizontal and vertical coordinates and width/height. Support both blur
@@ -255,7 +256,7 @@
                 </div>
             </section>
             <hr>
-            <section class="section irir-composite">
+            <section class="section irir-more" id="more">
 
                 <h1 class="title">More</h1>
                 <h2 class="subtitle">
