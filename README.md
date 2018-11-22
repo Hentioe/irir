@@ -1,6 +1,10 @@
 # Image Resizer In Rust
 
-A file server that can resize images in real time.
+A file hosting server that adjusts images in real time.
+
+**Warning: Do not use in a production environment, this project needs a lot of improvement.**
+
+Feature preview: [irir.bluerain.io](https://irir.bluerain.io)
 
 ## Usage
 
@@ -30,5 +34,3 @@ cargo run -- -o ./originals -O ./outputs
 * crop
 * ……
 * ~~to be developed~~
-
-Feature preview: [irir.bluerain.io](https://irir.bluerain.io)
