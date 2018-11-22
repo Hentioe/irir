@@ -3,7 +3,7 @@ extern crate image;
 use super::super::*;
 use image::DynamicImage;
 
-struct BlurHandler {
+pub struct BlurHandler {
     sigma: f32,
 }
 
@@ -17,15 +17,21 @@ impl ImageHandler for BlurHandler {
     }
 }
 
+impl BlurHandler {
+    pub fn new(level: Option<u32>) -> Self {
+        BlurHandler {
+            sigma: level.unwrap_or(0) as f32,
+        }
+    }
+}
+
 pub fn blur(opts: &ImageOption, img_info: &ImageInfo) -> Result<u64> {
     let resizer = Resizer {
         width: img_info.width,
         height: img_info.height,
         filter_type: opts.filter_type(),
     };
-    let blur_handler = BlurHandler {
-        sigma: img_info.blur_level().unwrap_or(0) as f32,
-    };
+    let blur_handler = BlurHandler::new(img_info.blur_level());
     let handlers: Vec<&ImageHandler> = vec![&resizer, &blur_handler];
     pipeline(opts, img_info, handlers)
 }

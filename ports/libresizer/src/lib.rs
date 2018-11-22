@@ -45,6 +45,10 @@ pub struct ImageInfo {
     width: Option<u32>,
     height: Option<u32>,
     blur_level: Option<u32>,
+    crop_x: Option<u32>,
+    crop_y: Option<u32>,
+    crop_w: Option<u32>,
+    crop_h: Option<u32>,
 }
 
 impl ImageInfo {
@@ -79,6 +83,24 @@ impl ImageInfo {
     pub fn blur(&mut self, level: u32) -> &ImageInfo {
         self.blur_level = Some(level);
         self
+    }
+
+    pub fn crop(
+        &mut self,
+        x: Option<u32>,
+        y: Option<u32>,
+        width: Option<u32>,
+        height: Option<u32>,
+    ) -> &Self {
+        self.crop_x = x;
+        self.crop_y = y;
+        self.crop_w = width;
+        self.crop_h = height;
+        self
+    }
+
+    pub fn croped(&self) -> bool {
+        !(self.crop_x == None && self.crop_y == None && self.crop_w == None && self.crop_h == None)
     }
 }
 
