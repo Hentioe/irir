@@ -16,7 +16,7 @@ cargo run -- -o ./originals -O ./outputs
 
 ### Basic usage (resize)
 
-1. I need to scale the `height` of the image to `600`  
+1. I need to adjust the `height` of the image to `600`  
   [http://localhost:8080/display/h600/ferris.png](http://localhost:8080/display/h600/ferris.png)
 1. Then I set the `width` to `400`  
   [http://localhost:8080/display/h600w400/ferris.png](http://localhost:8080/display/h600w400/ferris.png)
