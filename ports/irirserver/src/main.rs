@@ -2,11 +2,8 @@
 extern crate lazy_static;
 extern crate actix_web;
 extern crate env_logger;
-extern crate failure;
 extern crate irirserver;
-extern crate libcore;
 extern crate libresizer;
-extern crate regex;
 
 use actix_web::server;
 use irirserver::{cli, routes::*};

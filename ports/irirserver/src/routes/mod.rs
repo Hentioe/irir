@@ -1,5 +1,3 @@
-extern crate regex;
-
 use actix_web::App;
 use libresizer::ImageOption;
 
