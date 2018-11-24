@@ -3,62 +3,24 @@ extern crate lazy_static;
 extern crate actix_web;
 extern crate env_logger;
 extern crate failure;
+extern crate irirserver;
 extern crate libcore;
 extern crate libresizer;
 extern crate regex;
 
 use actix_web::middleware::Logger;
 use actix_web::{
-    error, fs, http, middleware::ErrorHandlers, middleware::Response, server, App, HttpRequest,
+    fs, http, middleware::ErrorHandlers, middleware::Response, server, App, HttpRequest,
     HttpResponse, Result as AtxResult,
 };
-use failure::Fail;
 use irirserver::cli;
+use irirserver::errors::*;
 use libcore::errors::*;
 use libresizer::{ImageInfo, ImageOption};
 use regex::Regex;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
-
-#[derive(Fail, Debug)]
-enum WebError {
-    #[fail(display = "Internal error, reason: {}", _0)]
-    InternalError(String),
-    #[fail(display = "Not Found")]
-    NotFound,
-}
-
-impl WebError {
-    fn internal(e: Error) -> WebError {
-        if let Some(e) = e.find_root_cause().downcast_ref::<std::io::Error>() {
-            if e.kind() == std::io::ErrorKind::NotFound {
-                return WebError::NotFound;
-            }
-        }
-        WebError::InternalError(e.to_string())
-    }
-
-    fn parse(e: std::num::ParseIntError) -> WebError {
-        WebError::InternalError(e.to_string())
-    }
-
-    fn io(e: std::io::Error) -> WebError {
-        WebError::InternalError(e.to_string())
-    }
-}
-
-impl error::ResponseError for WebError {
-    fn error_response(&self) -> HttpResponse {
-        match self {
-            WebError::InternalError(_cause) => HttpResponse::with_body(
-                http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("{}", self),
-            ),
-            WebError::NotFound => HttpResponse::new(http::StatusCode::NOT_FOUND),
-        }
-    }
-}
 
 fn render_display_404<S>(_: &HttpRequest<S>, mut resp: HttpResponse) -> AtxResult<Response> {
     resp.set_body(WebError::NotFound.to_string());
