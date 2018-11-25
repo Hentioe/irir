@@ -251,7 +251,7 @@ impl ActixApp for DisplayApp {
             .prefix("/display")
             .resource("", |r| {
                 r.f(|_req| {
-                    "Access images via /display/w{num}/{file_name} or /display/h{num}/{file_name}"
+                    "Display API list"
                 })
             })
             .resource("/bl/{name}.{format}", |r| r.f(display_blur))
