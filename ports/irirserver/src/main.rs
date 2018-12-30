@@ -15,15 +15,15 @@ lazy_static! {
 
 fn main() {
     let port = MATCHES.value_of("port").unwrap();
-
+    let originals = MATCHES.value_of("origin_path").unwrap();
+    let outputs = MATCHES.value_of("output_path").unwrap();
+    let filter_type =
+        libresizer::gen_filter_type(MATCHES.value_of("filter_type").unwrap()).unwrap();
+    let state = AppState::new(ImageOption::new(originals, outputs, filter_type));
+    
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
-    let apps = || {
-        let originals = MATCHES.value_of("origin_path").unwrap();
-        let outputs = MATCHES.value_of("output_path").unwrap();
-        let filter_type =
-            libresizer::gen_filter_type(MATCHES.value_of("filter_type").unwrap()).unwrap();
-        let state = AppState::new(ImageOption::new(originals, outputs, filter_type));
+    let apps = move || {
         vec![
             DisplayApp::new().action(state.clone()).finish(),
             IndexApp::new().action(state.clone()).finish(),

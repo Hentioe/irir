@@ -249,11 +249,7 @@ impl ActixApp for DisplayApp {
                 ErrorHandlers::new().handler(http::StatusCode::NOT_FOUND, render_display_404),
             )
             .prefix("/display")
-            .resource("", |r| {
-                r.f(|_req| {
-                    "Display API list"
-                })
-            })
+            .resource("", |r| r.f(|_req| "Display API list"))
             .resource("/bl/{name}.{format}", |r| r.f(display_blur))
             .resource("/bl/{size_s}/{name}.{format}", |r| r.f(display_blur))
             .resource("/bl{level}/{name}.{format}", |r| r.f(display_blur))
