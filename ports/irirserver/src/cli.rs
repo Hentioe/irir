@@ -18,6 +18,15 @@ pub fn build_cli() -> App<'static, 'static> {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("host")
+                .long("host")
+                .short("h")
+                .help("Binding host")
+                .required(false)
+                .default_value("0.0.0.0")
+                .takes_value(true),
+        )
+        .arg(
             Arg::with_name("filter_type")
                 .long("interpolation")
                 .short("i")
