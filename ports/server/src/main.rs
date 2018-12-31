@@ -1,11 +1,5 @@
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-extern crate actix_web;
-extern crate env_logger;
-extern crate irirserver;
-extern crate libresizer;
+use lazy_static::lazy_static;
+use log::info;
 
 use actix_web::server;
 use env_logger::{Builder, Target};
