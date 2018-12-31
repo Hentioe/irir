@@ -2,5 +2,5 @@
 members = [
     "ports/libcore",
     "ports/libresizer",
-    "ports/irirserver",
+    "ports/server",
 ]
