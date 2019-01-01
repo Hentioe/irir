@@ -5,6 +5,7 @@ use actix_web::{
     fs, http, middleware::ErrorHandlers, middleware::Response, App, HttpRequest, HttpResponse,
     Result as AtxResult,
 };
+use lazy_static::lazy_static;
 use libcore::errors::*;
 use libresizer::ImageInfo;
 use regex::Regex;

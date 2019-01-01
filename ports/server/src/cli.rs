@@ -1,6 +1,3 @@
-extern crate actix_web;
-extern crate clap;
-
 use clap::{App, Arg};
 
 pub fn build_cli() -> App<'static, 'static> {
