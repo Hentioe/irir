@@ -1,10 +1,9 @@
-use lazy_static::lazy_static;
-use log::info;
-
 use actix_web::server;
 use env_logger::{Builder, Target};
 use irirserver::{cli, routes::*};
+use lazy_static::lazy_static;
 use libresizer::ImageOption;
+use log::info;
 
 lazy_static! {
     static ref MATCHES: clap::ArgMatches<'static> = cli::build_cli().get_matches();

@@ -1,6 +1,3 @@
-extern crate image;
-extern crate libcore;
-
 pub use image::FilterType;
 use image::{DynamicImage, ImageError};
 use libcore::errors::*;

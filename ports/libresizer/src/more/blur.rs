@@ -1,5 +1,3 @@
-extern crate image;
-
 use super::super::*;
 use image::DynamicImage;
 
